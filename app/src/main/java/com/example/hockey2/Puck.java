@@ -54,4 +54,8 @@ public class Puck {
     public float getY() {
         return y;
     }
+
+    public float getRadius() {
+        return radius;
+    }
 }

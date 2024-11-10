@@ -98,18 +98,34 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private boolean isGoalScored() {
         int goalWidth = fieldWidth / 3;
-        // Verificar si el puck entra en la portería superior (Jugador 2 marca un gol)
-        if (puck.getY() <= 0 && puck.getX() > (fieldWidth - goalWidth) / 2 && puck.getX() < (fieldWidth + goalWidth) / 2) {
-            score2++;
+        int goalTopY = 10; // Parte superior de la portería
+        int goalBottomY = fieldHeight - 10; // Parte inferior de la portería
+        float puckRadius = puck.getRadius();
+
+        // Coordenadas de la portería superior (Jugador 2 marca gol)
+        float goalLeftX = (fieldWidth - goalWidth) / 2;
+        float goalRightX = (fieldWidth + goalWidth) / 2;
+
+        // Verificar si el puck toca la portería superior (Jugador 2 marca gol)
+        if (puck.getY() - puckRadius <= goalTopY &&
+                puck.getX() > goalLeftX &&
+                puck.getX() < goalRightX) {
+            score2++; // Incrementar el puntaje del Jugador 2
             return true;
         }
-        // Verificar si el puck entra en la portería inferior (Jugador 1 marca un gol)
-        if (puck.getY() >= fieldHeight && puck.getX() > (fieldWidth - goalWidth) / 2 && puck.getX() < (fieldWidth + goalWidth) / 2) {
-            score1++;
+
+        // Verificar si el puck toca la portería inferior (Jugador 1 marca gol)
+        if (puck.getY() + puckRadius >= goalBottomY &&
+                puck.getX() > goalLeftX &&
+                puck.getX() < goalRightX) {
+            score1++; // Incrementar el puntaje del Jugador 1
             return true;
         }
+
         return false;
     }
+
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
