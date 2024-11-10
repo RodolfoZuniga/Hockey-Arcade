@@ -108,25 +108,29 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        int action = event.getAction();
-        float x = event.getX();
-        float y = event.getY();
+        int pointerCount = event.getPointerCount();
 
         if (!gameStarted) {
             gameStarted = true;
         }
 
-        if (action == MotionEvent.ACTION_MOVE) {
-            // Mover paleta del jugador correspondiente
-            if (y < getHeight() / 2) {
+        // Recorrer todos los toques detectados
+        for (int i = 0; i < pointerCount; i++) {
+            int pointerId = event.getPointerId(i);
+            float x = event.getX(i);
+            float y = event.getY(i);
+
+            // Mover la paleta del jugador correspondiente
+            if (y < fieldHeight / 2) { // Área del Jugador 1 (parte superior)
                 paddle1.setPosition(x);
-            } else {
+            } else { // Área del Jugador 2 (parte inferior)
                 paddle2.setPosition(x);
             }
         }
 
         return true;
     }
+
 
     public void update() {
         if (gameStarted) {
