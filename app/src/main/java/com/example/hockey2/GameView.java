@@ -27,7 +27,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private int fullHeight;
 
     // Temporizador
-    private long gameTime = 10000; // 60 segundos
+    private long gameTime = 60000; // 60 segundos
     private CountDownTimer gameTimer;
     private boolean gameEnded = false;
 
