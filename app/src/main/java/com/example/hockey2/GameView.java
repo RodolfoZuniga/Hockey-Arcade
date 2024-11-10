@@ -1,9 +1,12 @@
 package com.example.hockey2;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.CountDownTimer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -20,6 +23,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     // Dimensiones de la cancha
     private final int fieldHeight = 2100;
     private int fieldWidth;
+
+    // Temporizador
+    private long gameTime = 60000; // 60 segundos
+    private CountDownTimer gameTimer;
+    private boolean gameEnded = false;
 
     //empezar el juego
     private boolean player1Ready = false;
@@ -38,6 +46,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         paddle1 = new Paddle(fieldWidth / 2, 60); // Paleta del Jugador 1
         paddle2 = new Paddle(fieldWidth / 2, fieldHeight - 60); // Paleta del Jugador 2
         puck = new Puck(fieldWidth / 2, fieldHeight / 2);
+
+        startGameTimer();
     }
 
     @Override
@@ -76,6 +86,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             // Dibujar puntajes
             canvas.drawText("Jugador 1: " + score1, 50, 50, paint);
             canvas.drawText("Jugador 2: " + score2, 50, fieldHeight - 20, paint);
+
+            // Dibujar el tiempo restante
+            canvas.drawText("Tiempo: " + gameTime / 1000 + "s", fieldWidth - 300, 50, paint);
 
             // Dibujar bordes de la portería
             paint.setColor(Color.RED);
@@ -125,7 +138,60 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         return false;
     }
 
+    // Iniciar el temporizador
+    private void startGameTimer() {
+        gameTimer = new CountDownTimer(gameTime, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                gameTime = millisUntilFinished;
+                invalidate();
+            }
 
+            @Override
+            public void onFinish() {
+                gameEnded = true; // El juego ha terminado
+                showGameResultDialog(); // Mostrar el cuadro de diálogo con el resultado
+            }
+        };
+        gameTimer.start();
+    }
+
+    private void showGameResultDialog() {
+        String winner;
+        if (score1 > score2) {
+            winner = "Jugador 1";
+        } else if (score2 > score1) {
+            winner = "Jugador 2";
+        } else {
+            winner = "Empate";
+        }
+
+        // Crear el cuadro de diálogo
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Fin del Juego");
+        builder.setMessage("Ganador: " + winner + "\n" +
+                "Marcador: " + score1 + " - " + score2 + "\n" +
+                "Tiempo transcurrido: " + (60000 - gameTime) / 1000 + " segundos");
+
+        builder.setPositiveButton("Jugar de Nuevo", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                restartGame(); // Reiniciar el juego
+            }
+        });
+
+        builder.setCancelable(false);
+        builder.show();
+    }
+
+    private void restartGame() {
+        score1 = 0;
+        score2 = 0;
+        gameTime = 60000; // Reiniciar a 60 segundos
+        gameEnded = false;
+        startGameTimer(); // Reiniciar el temporizador
+        invalidate(); // Redibujar la pantalla
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -155,6 +221,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
 
+
     public void update() {
         if (gameStarted) {
             puck.update(fieldWidth, fieldHeight);
@@ -166,5 +233,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private void resetGame() {
         puck.resetPosition(getWidth() / 2, getHeight() / 2);
         gameStarted = false;
+
+        player1Ready = false;
+        player2Ready = false;
     }
 }
