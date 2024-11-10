@@ -27,13 +27,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private int fullHeight;
 
     // Temporizador
-    private long gameTime = 60000; // 60 segundos
+    private long gameTime = 10000; // 60 segundos
     private CountDownTimer gameTimer;
     private boolean gameEnded = false;
 
     //empezar el juego
     private boolean player1Ready = false;
     private boolean player2Ready = false;
+
+    // Variable de control para el cuadro de diálogo
+    private boolean dialogShown = false;
 
 
     public GameView(Context context) {
@@ -95,13 +98,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             drawHockeyField(canvas);
 
             // Dibujar el tiempo restante debajo de la cancha y centrado
-            canvas.drawText("Tiempo: " + gameTime / 1000 + "s", (fieldWidth / 2) - 50, fullHeight - 50, paint);
+            paint.setTextSize(100);
+            canvas.drawText("" + gameTime / 1000 + "s", (fieldWidth / 2) - 100, fullHeight - 50, paint);
 
             // Dibujar paletas y puck
-            paint.setColor(Color.YELLOW);
             paddle1.draw(canvas, paint);
-
-            paint.setColor(Color.BLUE);
             paddle2.draw(canvas, paint);
 
             paint.setColor(Color.WHITE);
@@ -226,6 +227,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             winner = "Empate";
         }
 
+        if (dialogShown) {
+            return; // Si ya se mostró el diálogo, no hacer nada
+        }
+
+        dialogShown = true; // Marcar como mostrado
+
         // Crear el cuadro de diálogo
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Fin del Juego");
@@ -236,11 +243,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         builder.setPositiveButton("Jugar de Nuevo", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                dialogShown = false; // Reiniciar la variable de control al comenzar un nuevo juego
                 restartGame(); // Reiniciar el juego
             }
         });
 
-        builder.setCancelable(false);
+        builder.setCancelable(false); // Para que no se pueda cerrar el diálogo al tocar fuera de él
         builder.show();
     }
 

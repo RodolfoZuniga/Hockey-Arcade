@@ -7,6 +7,16 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/btnStartGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Iniciar Juego"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:backgroundTint="#2196F3"
+        android:textColor="#FFFFFF"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
