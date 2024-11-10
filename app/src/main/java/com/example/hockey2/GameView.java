@@ -21,8 +21,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean gameStarted = false;
 
     // Dimensiones de la cancha
-    private final int fieldHeight = 2100;
+    private int fieldHeight;
     private int fieldWidth;
+
+    private int fullHeight;
 
     // Temporizador
     private long gameTime = 60000; // 60 segundos
@@ -40,14 +42,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         paint = new Paint();
 
         // Obtener el ancho de la pantalla
+        fullHeight = getResources().getDisplayMetrics().heightPixels;
+        fieldHeight = fullHeight - 200;
         fieldWidth = getResources().getDisplayMetrics().widthPixels;
 
         // Inicializar paletas y puck
-        paddle1 = new Paddle(fieldWidth / 2, 60); // Paleta del Jugador 1
-        paddle2 = new Paddle(fieldWidth / 2, fieldHeight - 60); // Paleta del Jugador 2
+        paddle1 = new Paddle(fieldWidth / 2, 120); // Paleta del Jugador 1
+        paddle2 = new Paddle(fieldWidth / 2, fieldHeight - 120); // Paleta del Jugador 2
         puck = new Puck(fieldWidth / 2, fieldHeight / 2);
 
-        startGameTimer();
+
     }
 
     @Override
@@ -87,19 +91,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawText("Jugador 1: " + score1, 50, 50, paint);
             canvas.drawText("Jugador 2: " + score2, 50, fieldHeight - 20, paint);
 
-            // Dibujar el tiempo restante
-            canvas.drawText("Tiempo: " + gameTime / 1000 + "s", fieldWidth - 300, 50, paint);
+            // Dibujar la cancha de hockey
+            drawHockeyField(canvas);
 
-            // Dibujar bordes de la portería
-            paint.setColor(Color.RED);
-            int goalWidth = fieldWidth / 3;
-            canvas.drawRect((fieldWidth - goalWidth) / 2, 0, (fieldWidth + goalWidth) / 2, 10, paint); // Portería superior
-            canvas.drawRect((fieldWidth - goalWidth) / 2, fieldHeight - 10, (fieldWidth + goalWidth) / 2, fieldHeight, paint); // Portería inferior
+            // Dibujar el tiempo restante debajo de la cancha y centrado
+            canvas.drawText("Tiempo: " + gameTime / 1000 + "s", (fieldWidth / 2) - 50, fullHeight - 50, paint);
 
             // Dibujar paletas y puck
-            paint.setColor(Color.WHITE);
+            paint.setColor(Color.YELLOW);
             paddle1.draw(canvas, paint);
+
+            paint.setColor(Color.BLUE);
             paddle2.draw(canvas, paint);
+
+            paint.setColor(Color.WHITE);
             puck.draw(canvas, paint);
 
             // Verificar si hay gol
@@ -107,6 +112,61 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 resetGame();
             }
         }
+    }
+
+    private void drawHockeyField(Canvas canvas) {
+        paint.setColor(Color.WHITE);
+        paint.setStrokeWidth(8);
+
+        // Líneas laterales de la cancha
+        canvas.drawLine(0, 0, 0, fieldHeight, paint); // Línea izquierda
+        canvas.drawLine(fieldWidth, 0, fieldWidth, fieldHeight, paint); // Línea derecha
+
+        // Línea central
+        canvas.drawLine(0, fieldHeight / 2, fieldWidth, fieldHeight / 2, paint);
+
+        // Líneas de portería
+        int goalWidth = fieldWidth / 3;
+        int goalHeight = 10;
+
+        paint.setColor(Color.RED);
+        canvas.drawRect((fieldWidth - goalWidth) / 2, 0, (fieldWidth + goalWidth) / 2, goalHeight, paint); // Portería superior
+        canvas.drawRect((fieldWidth - goalWidth) / 2, fieldHeight - goalHeight, (fieldWidth + goalWidth) / 2, fieldHeight, paint); // Portería inferior
+
+        // Área de portería semicircular (arriba)
+        paint.setColor(Color.WHITE);
+        paint.setStyle(Paint.Style.STROKE);
+        int areaRadius = goalWidth / 2;
+        canvas.drawArc(
+                (fieldWidth - goalWidth) / 2,
+                -areaRadius,
+                (fieldWidth + goalWidth) / 2,
+                areaRadius,
+                0, 180, false, paint
+        );
+
+        // Área de portería semicircular (abajo)
+        canvas.drawArc(
+                (fieldWidth - goalWidth) / 2,
+                fieldHeight - areaRadius,
+                (fieldWidth + goalWidth) / 2,
+                fieldHeight + areaRadius,
+                180, 180, false, paint
+        );
+
+        // Líneas de los tercios del campo
+        canvas.drawLine(0, fieldHeight / 3, fieldWidth, fieldHeight / 3, paint);
+        canvas.drawLine(0, 2 * fieldHeight / 3, fieldWidth, 2 * fieldHeight / 3, paint);
+
+        // Puntos de cara a cara en la cancha (centro y lados)
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(fieldWidth / 2, fieldHeight / 2, 20, paint); // Punto central
+        canvas.drawCircle(fieldWidth / 4, fieldHeight / 4, 20, paint); // Punto superior izquierdo
+        canvas.drawCircle(3 * fieldWidth / 4, fieldHeight / 4, 20, paint); // Punto superior derecho
+        canvas.drawCircle(fieldWidth / 4, 3 * fieldHeight / 4, 20, paint); // Punto inferior izquierdo
+        canvas.drawCircle(3 * fieldWidth / 4, 3 * fieldHeight / 4, 20, paint); // Punto inferior derecho
+
+        paint.setStyle(Paint.Style.STROKE);
     }
 
     private boolean isGoalScored() {
@@ -215,6 +275,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         if (!gameStarted && player1Ready && player2Ready) {
             gameStarted = true;
+            startGameTimer();
         }
 
         return true;
