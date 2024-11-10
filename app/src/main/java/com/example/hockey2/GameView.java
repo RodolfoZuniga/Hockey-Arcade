@@ -21,6 +21,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final int fieldHeight = 2100;
     private int fieldWidth;
 
+    //empezar el juego
+    private boolean player1Ready = false;
+    private boolean player2Ready = false;
+
+
     public GameView(Context context) {
         super(context);
         getHolder().addCallback(this);
@@ -30,8 +35,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         fieldWidth = getResources().getDisplayMetrics().widthPixels;
 
         // Inicializar paletas y puck
-        paddle1 = new Paddle(fieldWidth / 2, 100); // Paleta del Jugador 1
-        paddle2 = new Paddle(fieldWidth / 2, fieldHeight - 100); // Paleta del Jugador 2
+        paddle1 = new Paddle(fieldWidth / 2, 60); // Paleta del Jugador 1
+        paddle2 = new Paddle(fieldWidth / 2, fieldHeight - 60); // Paleta del Jugador 2
         puck = new Puck(fieldWidth / 2, fieldHeight / 2);
     }
 
@@ -110,10 +115,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public boolean onTouchEvent(MotionEvent event) {
         int pointerCount = event.getPointerCount();
 
-        if (!gameStarted) {
-            gameStarted = true;
-        }
-
         // Recorrer todos los toques detectados
         for (int i = 0; i < pointerCount; i++) {
             int pointerId = event.getPointerId(i);
@@ -122,10 +123,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             // Mover la paleta del jugador correspondiente
             if (y < fieldHeight / 2) { // Área del Jugador 1 (parte superior)
-                paddle1.setPosition(x);
+                paddle1.setPosition(x, y, fieldWidth, fieldHeight);
+                player1Ready = true;
             } else { // Área del Jugador 2 (parte inferior)
-                paddle2.setPosition(x);
+                paddle2.setPosition(x, y, fieldWidth, fieldHeight);
+                player2Ready = true;
             }
+        }
+
+        if (!gameStarted && player1Ready && player2Ready) {
+            gameStarted = true;
         }
 
         return true;

@@ -6,7 +6,7 @@ import android.graphics.Paint;
 import com.example.hockey2.Paddle;
 
 public class Puck {
-    private float x, y, dx = 30, dy = 16;
+    private float x, y, dx = 10, dy = 10;
     private final float radius = 35;
 
     public Puck(float x, float y) {
