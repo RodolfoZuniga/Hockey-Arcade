@@ -38,6 +38,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     // Variable de control para el cuadro de diálogo
     private boolean dialogShown = false;
 
+    //Penalizaciones
+    private int penalties1 = 0; // Penalizaciones del Jugador 1
+    private int penalties2 = 0; // Penalizaciones del Jugador 2
+    private boolean isTimerRunning = false;
+
+
+
 
     public GameView(Context context) {
         super(context);
@@ -201,6 +208,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     // Iniciar el temporizador
     private void startGameTimer() {
+        if (isTimerRunning) return; // Evitar iniciar múltiples cronómetros
+
+        isTimerRunning = true; // Marcar que el cronómetro está corriendo
         gameTimer = new CountDownTimer(gameTime, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -210,12 +220,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             @Override
             public void onFinish() {
-                gameEnded = true; // El juego ha terminado
-                showGameResultDialog(); // Mostrar el cuadro de diálogo con el resultado
+                isTimerRunning = false; // El cronómetro ha terminado
+                gameEnded = true;
+                showGameResultDialog();
             }
         };
         gameTimer.start();
     }
+
 
     private void showGameResultDialog() {
         String winner;
@@ -252,35 +264,55 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         builder.show();
     }
 
-    private void restartGame() {
-        score1 = 0;
-        score2 = 0;
-        gameTime = 60000; // Reiniciar a 60 segundos
-        gameEnded = false;
-        startGameTimer(); // Reiniciar el temporizador
-        invalidate(); // Redibujar la pantalla
-    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        int action = event.getActionMasked();
         int pointerCount = event.getPointerCount();
 
-        // Recorrer todos los toques detectados
+        // Detección de levantamiento de dedo
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) {
+            float y = event.getY();
+
+            // Determinar qué jugador levantó el dedo y aplicar penalización
+            if (y < fieldHeight / 2) {
+                penalties1++;
+            } else {
+                penalties2++;
+            }
+
+            // Verificar penalización y finalizar el juego
+            checkPenalties();
+            return true;
+        }
+
+        // Mover paletas y verificar cruce de mitad de cancha
         for (int i = 0; i < pointerCount; i++) {
-            int pointerId = event.getPointerId(i);
             float x = event.getX(i);
             float y = event.getY(i);
 
-            // Mover la paleta del jugador correspondiente
-            if (y < fieldHeight / 2) { // Área del Jugador 1 (parte superior)
+            if (y < fieldHeight / 2) { // Área del Jugador 1
                 paddle1.setPosition(x, y, fieldWidth, fieldHeight);
                 player1Ready = true;
-            } else { // Área del Jugador 2 (parte inferior)
+
+                if (y > fieldHeight / 2) { // Jugador 1 cruza la mitad
+                    penalties1++;
+                    checkPenalties();
+                    return true;
+                }
+            } else { // Área del Jugador 2
                 paddle2.setPosition(x, y, fieldWidth, fieldHeight);
                 player2Ready = true;
+
+                if (y < fieldHeight / 2) { // Jugador 2 cruza la mitad
+                    penalties2++;
+                    checkPenalties();
+                    return true;
+                }
             }
         }
 
+        // Iniciar el temporizador si ambos jugadores están listos
         if (!gameStarted && player1Ready && player2Ready) {
             gameStarted = true;
             startGameTimer();
@@ -290,6 +322,49 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
 
+    private void checkPenalties() {
+        if (penalties1 > 0) {
+            stopGameTimer(); // Detener el cronómetro
+            gameEnded = true;
+            showPenaltyWinDialog("Jugador 2");
+        } else if (penalties2 > 0) {
+            stopGameTimer(); // Detener el cronómetro
+            gameEnded = true;
+            showPenaltyWinDialog("Jugador 1");
+        }
+    }
+
+    private void stopGameTimer() {
+        if (gameTimer != null) {
+            gameTimer.cancel();
+            gameTimer = null;
+            isTimerRunning = false; // Marcar que el cronómetro no está corriendo
+        }
+    }
+
+    private void showPenaltyWinDialog(String winner) {
+        if (dialogShown) {
+            return; // Evitar mostrar el diálogo más de una vez
+        }
+
+        stopGameTimer();
+        dialogShown = true;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Fin del Juego");
+        builder.setMessage("Ganador por penalización: " + winner);
+
+        builder.setPositiveButton("Jugar de Nuevo", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialogShown = false;
+                restartGame();
+            }
+        });
+
+        builder.setCancelable(false);
+        builder.show();
+    }
 
     public void update() {
         if (gameStarted) {
@@ -299,11 +374,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    //para cuando marcan gol, reiniciar el partido
     private void resetGame() {
-        puck.resetPosition(getWidth() / 2, getHeight() / 2);
+        puck.resetPosition(getWidth() / 2, fieldHeight / 2);
+        paddle1.reolocalizarPaddles(fieldWidth / 2, 120);
+        paddle2.reolocalizarPaddles(fieldWidth / 2, fieldHeight - 120);
+
         gameStarted = false;
 
         player1Ready = false;
         player2Ready = false;
+
     }
+
+    private void restartGame() {
+        stopGameTimer(); // Detener el cronómetro si aún está en ejecución
+
+        puck.resetPosition(getWidth() / 2, fieldHeight / 2);
+        paddle1.reolocalizarPaddles(fieldWidth / 2, 120);
+        paddle2.reolocalizarPaddles(fieldWidth / 2, fieldHeight - 120);
+
+        score1 = 0;
+        score2 = 0;
+        penalties1 = 0;
+        penalties2 = 0;
+        gameTime = 60000;
+        gameEnded = false;
+
+        startGameTimer(); // Iniciar el cronómetro
+        invalidate();
+    }
+
+
 }
